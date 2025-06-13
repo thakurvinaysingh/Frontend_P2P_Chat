@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // ✅ correct place to import
 import { io } from 'socket.io-client';
 import BuyOrders from '../component/BuyOrders';
-import ChatBox from '../component/ChatBox';
 
 const socket = io('http://192.168.1.26:2001', {
     transports: ['websocket'],
@@ -12,7 +12,7 @@ function Home() {
     const [userId, setUserId] = useState('');
     const [registered, setRegistered] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
-    const [chatStarted, setChatStarted] = useState(false);
+    const navigate = useNavigate(); // ✅ call inside component
 
     useEffect(() => {
         return () => {
@@ -28,10 +28,10 @@ function Home() {
 
     return (
         <div className="min-h-screen bg-gradient-to-tr from-blue-50 to-purple-100 flex items-center justify-center px-4">
-            <div className="w-full max-w-3xl bg-white border border-gray-200 rounded-2xl shadow-lg p-8">
+            <div className="w-full max-w-2xl bg-white border border-gray-200 rounded-2xl shadow-lg p-8">
                 {!registered ? (
                     <div>
-                        <h2 className="text-3xl font-bold mb-6 text-gray-800 text-center">
+                        <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
                             Register with UPB Address
                         </h2>
                         <input
@@ -55,7 +55,7 @@ function Home() {
                         </h2>
                         <BuyOrders onSelect={(order) => setSelectedOrder(order)} />
 
-                        {selectedOrder && !chatStarted && (
+                        {selectedOrder && (
                             <div className="mt-8 p-5 bg-gray-100 border border-gray-300 rounded-xl shadow-sm">
                                 <h3 className="font-semibold text-xl mb-3 text-gray-700">
                                     Order Details
@@ -67,21 +67,19 @@ function Home() {
                                     <p><span className="font-medium">Currency:</span> {selectedOrder.currency}</p>
                                 </div>
                                 <button
-                                    onClick={() => setChatStarted(true)}
+                                    onClick={() =>
+                                        navigate('/chat', {
+                                            state: {
+                                                userId,
+                                                peerId: selectedOrder.upbAddress,
+                                                orderId:selectedOrder.txnId
+                                            },
+                                        })
+                                    }
                                     className="mt-5 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-all"
                                 >
                                     Start Chat
                                 </button>
-                            </div>
-                        )}
-
-                        {chatStarted && (
-                            <div className="mt-10">
-                                <ChatBox
-                                    socket={socket}
-                                    userId={userId}
-                                    peerId={selectedOrder.upbAddress}
-                                />
                             </div>
                         )}
                     </div>
