@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'; // ✅ correct place to import
 import { io } from 'socket.io-client';
 import BuyOrders from '../component/BuyOrders';
 
-const socket = io('http://192.168.1.26:2001', {
+const socket = io('http://192.168.1.27:2001', {
     transports: ['websocket'],
     withCredentials: true,
 });

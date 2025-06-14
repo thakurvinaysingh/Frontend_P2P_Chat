@@ -1,8 +1,8 @@
 // src/socket.js
 import { io } from 'socket.io-client';
 
-const socket = io('http://192.168.1.26:2001', {
-    transports: ['websocket'],
+const socket = io('http://192.168.1.27:2001', {
+    transports: ['websocket', 'polling'],
     withCredentials: true,
 });
 
