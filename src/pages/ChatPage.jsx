@@ -1,35 +1,40 @@
+// src/pages/ChatBox.jsx
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import socket from '../socket'; // singleton socket instance
+import socket from '../socket'; // singleton instance
 
 function ChatBox() {
     const location = useLocation();
     const { userId, peerId, orderId } = location.state || {};
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
-    console.log(userId, peerId, orderId)
-    // Build a unique room ID (stable across renders)
-    const roomId = `${orderId}_${userId}_${peerId}`;
+
+    // Consistent roomId based on sorted IDs
+    const sortedIds = [userId, peerId].sort().join('_');
+    const roomId = `${orderId}_${sortedIds}`;
 
     useEffect(() => {
         if (!socket || !userId || !peerId || !orderId) return;
 
-        // Register the user and join a private chat room
         socket.emit('register', userId);
-        socket.emit('join_room', { roomId, userId, peerId, orderId: orderId });
+        socket.emit('join_room', { roomId, userId });
 
-        // Handle incoming messages
         const handleMessage = (msg) => {
             setMessages((prev) => [...prev, msg]);
         };
 
+        const handleRoomFull = ({ message }) => {
+            alert(message);
+            window.location.href = '/Entry'; // Redirect to join screen
+        };
+
         socket.on('receive_message', handleMessage);
 
-        // Clean up to avoid duplicate listeners
         return () => {
             socket.off('receive_message', handleMessage);
+            socket.off('room_full', handleRoomFull);
         };
-    }, [userId, peerId, orderId, roomId]);
+    }, [roomId, userId, peerId, orderId]);
 
     const sendMessage = () => {
         if (!input.trim()) return;
@@ -41,27 +46,19 @@ function ChatBox() {
             type: 'text',
         };
 
-        // Emit message to backend
         socket.emit('send_message', messageData);
-
-        // Optional: Add message instantly in UI (optimistic UI)
-        setMessages((prev) => [...prev, messageData]);
-
-        // Clear input
+        // setMessages((prev) => [...prev, messageData]);
         setInput('');
     };
 
     return (
-        
         <div className="min-h-screen flex items-center justify-center bg-gray-100 px-2">
-       
             <div className="flex flex-col h-[500px] w-full max-w-md bg-white rounded-lg shadow-md overflow-hidden">
                 <div className="text-sm text-gray-600 bg-gray-200 px-4 py-2">
-                    <p><span className="font-semibold text-gray-700">You:</span> {userId}</p>
-                    <p><span className="font-semibold text-gray-700">Peer:</span> {peerId}</p>
-                    <p><span className="font-semibold text-gray-700">Order ID:</span> {orderId}</p>
+                    <p><span className="font-semibold">You:</span> {userId}</p>
+                    <p><span className="font-semibold">Peer:</span> {peerId}</p>
+                    <p><span className="font-semibold">Order ID:</span> {orderId}</p>
                 </div>
-                {/* Messages */}
                 <div className="flex-1 overflow-y-auto px-4 py-3 bg-gray-50">
                     {messages.map((msg, idx) => (
                         <div
@@ -70,8 +67,8 @@ function ChatBox() {
                         >
                             <div
                                 className={`max-w-[70%] px-4 py-2 rounded-xl text-sm ${msg.senderId === userId
-                                        ? 'bg-blue-600 text-white rounded-br-none'
-                                        : 'bg-gray-200 text-gray-800 rounded-bl-none'
+                                    ? 'bg-blue-600 text-white rounded-br-none'
+                                    : 'bg-gray-200 text-gray-800 rounded-bl-none'
                                     }`}
                             >
                                 <p>{msg.message}</p>
@@ -80,7 +77,6 @@ function ChatBox() {
                     ))}
                 </div>
 
-                {/* Input box */}
                 <div className="p-3 border-t bg-white flex items-center gap-2">
                     <input
                         value={input}
@@ -98,12 +94,11 @@ function ChatBox() {
                 </div>
             </div>
         </div>
-      
-    
     );
 }
 
 export default ChatBox;
+
 
 
 
