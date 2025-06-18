@@ -13,12 +13,10 @@ function ChatEntry() {
             alert("All fields are required");
             return;
         }
-
         navigate('/chat', {
             state: { userId, peerId, orderId }
         });
     };
-
     return (
         <div className="min-h-screen flex flex-col justify-center items-center bg-gray-100">
             <div className="bg-white p-6 rounded shadow w-96 space-y-4">
